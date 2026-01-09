@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freak Nexus | Premium Writing Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --primary: #1e293b; --accent: #2563eb; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; scroll-behavior: smooth; }
+        
+        .portfolio-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .portfolio-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1); }
+        .logo-circle { width: 64px; height: 64px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        /* QUILL PRO UI TWEAKS */
+        #editor { 
+            height: 450px; 
+            border-bottom-left-radius: 12px; 
+            border-bottom-right-radius: 12px; 
+            background: white;
+            font-size: 16px;
+        }
+        .ql-toolbar.ql-snow { 
+            border-top-left-radius: 12px; 
+            border-top-right-radius: 12px; 
+            background: #f8fafc; 
+            border-color: #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .ql-container.ql-snow { border-color: #e2e8f0; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        
+        .hidden { display: none !important; }
+        .article-view { position: fixed; inset: 0; background: white; z-index: 1000; overflow-y: auto; display: none; animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* Typography for Internal Articles */
+        #articleContent img { border-radius: 1rem; margin: 2rem 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        #articleContent blockquote { border-left: 4px solid #2563eb; padding-left: 1.5rem; font-style: italic; color: #475569; }
+    </style>
+</head>
+<body>
+
+    <nav class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Freelance Portfolio v1.0</div>
+        <div id="navControls">
+            <button onclick="showLogin()" id="loginBtnNav" class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition">
+                <i class="fa-solid fa-lock-open mr-1 opacity-50"></i> Admin Access
+            </button>
+            <button onclick="showView('admin')" id="dashBtnNav" class="text-sm font-bold text-blue-600 hidden flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Dashboard
+            </button>
+        </div>
+    </nav>
+
+    <div id="publicView" class="max-w-4xl mx-auto px-6 pb-20">
+        <header class="text-center py-16">
+            <div class="logo-circle text-2xl font-bold">FN</div>
+            <h1 class="text-5xl font-black text-slate-900 tracking-tight">Freak Nexus</h1>
+            <p class="text-xl text-slate-500 mt-4 font-medium">Content Writer & SEO Specialist</p>
+        </header>
+
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-slate-800">Selected Work</h2>
+            <div class="h-px flex-1 bg-slate-200 mx-6"></div>
+        </div>
+        <div id="portfolioGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+    </div>
+
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center hidden z-[2000]">
+        <div class="bg-white p-10 rounded-3xl w-full max-w-sm shadow-2xl">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-black text-slate-800">Welcome Back</h2>
+            </div>
+            <div class="space-y-4">
+                <input type="text" id="username" placeholder="Username" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none">
+                <input type="password" id="password" placeholder="Password" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-blue-500 outline-none">
+                <button onclick="handleLogin()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-black transition-all">Login</button>
+                <button onclick="hideLogin()" class="w-full text-slate-400 text-xs font-bold uppercase mt-4 text-center">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminView" class="max-w-6xl mx-auto p-8 hidden">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900">Console</h1>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="exportData()" class="text-[9px] bg-slate-800 text-white px-3 py-1 rounded font-bold">EXPORT JSON</button>
+                    <button onclick="importData()" class="text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded font-bold">IMPORT JSON</button>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="showView('public')" class="bg-white border text-slate-700 px-6 py-2 rounded-xl font-bold text-sm shadow-sm">Preview Site</button>
+                <button onclick="logout()" class="bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold text-sm">Logout</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-white p-8 rounded-3xl border shadow-sm">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i class="fa-solid fa-pen-nib text-blue-600"></i> Write New Post</h3>
+                    <div class="space-y-4">
+                        <input type="text" id="postTitle" placeholder="Article Title" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm outline-none focus:border-blue-500">
+                        <input type="text" id="postImage" placeholder="Cover Image URL (Unsplash/Pexels)" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm outline-none focus:border-blue-500">
+                        <textarea id="postExcerpt" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm outline-none focus:border-blue-500 h-20" placeholder="Excerpt for the card..."></textarea>
+                        
+                        <div class="pt-4">
+                            <div class="flex gap-2 mb-4 bg-slate-100 p-1 rounded-xl">
+                                <button onclick="setMethod('link')" id="methodLink" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600">External Link</button>
+                                <button onclick="setMethod('article')" id="methodArticle" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-slate-500">Internal Editor (Pro)</button>
+                            </div>
+                            <div id="linkInputArea"><input type="text" id="docLink" placeholder="Paste URL here" class="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm outline-none focus:border-blue-500"></div>
+                            <div id="quillArea" class="hidden"><div id="editor"></div></div>
+                        </div>
+
+                        <button onclick="savePost()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-bold shadow-xl hover:bg-blue-700 transition">Publish Sample</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="bg-white rounded-3xl border shadow-sm overflow-hidden sticky top-8">
+                    <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800">Your Portfolio</h3>
+                        <span id="postCount" class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded-full uppercase">0 Samples</span>
+                    </div>
+                    <div class="overflow-y-auto max-h-[600px]">
+                        <table class="w-full text-left">
+                            <tbody id="adminTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="articleView" class="article-view">
+        <div class="max-w-3xl mx-auto px-6 py-20">
+            <button onclick="closeArticle()" class="mb-12 flex items-center gap-2 font-bold text-slate-400 hover:text-blue-600 transition">
+                <i class="fa-solid fa-arrow-left"></i> Back to Portfolio
+            </button>
+            <div id="articleContent" class="prose prose-slate lg:prose-xl max-w-none"></div>
+        </div>
+    </div>
+
+    <script>
+        const _AUTH = { u: "QXJ6b28=", p: "TmV4dXMjVm9pZEA2NjM=" };
+        let posts = [];
+        let postMethod = 'link'; 
+        let quill;
+
+        // BOOTLOADER
+        async function loadData() {
+    const saved = localStorage.getItem('freakNexusPosts');
+    if (saved) {
+        posts = JSON.parse(saved);
+    } else {
+        try {
+            const response = await fetch('blogPosts.json');
+            if (response.ok) {
+                posts = await response.json();
+                localStorage.setItem('freakNexusPosts', JSON.stringify(posts));
+            }
+        } catch (e) { console.log("Repo empty"); }
+    }
+    // Render both views so data is ready no matter where the user goes
+    renderPortfolio();
+    renderAdminTable(); 
+}
+
+        // QUILL PRO CONFIGURATION
+        function initQuill() {
+            if(quill) return;
+            quill = new Quill('#editor', {
+                theme: 'snow',
+                placeholder: 'Start writing your masterpiece...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'], 
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'script': 'sub'}, { 'script': 'super' }],      
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],          
+                        [{ 'color': [] }, { 'background': [] }],          
+                        [{ 'align': [] }],
+                        ['link', 'image', 'video'],
+                        ['clean']                                         
+                    ]
+                }
+            });
+        }
+
+        function setMethod(method) {
+            postMethod = method;
+            document.getElementById('linkInputArea').classList.toggle('hidden', method !== 'link');
+            document.getElementById('quillArea').classList.toggle('hidden', method !== 'article');
+            
+            document.getElementById('methodLink').className = method === 'link' ? "flex-1 py-2 rounded-lg text-xs font-bold bg-white shadow-sm text-blue-600" : "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500";
+            document.getElementById('methodArticle').className = method === 'article' ? "flex-1 py-2 rounded-lg text-xs font-bold bg-white shadow-sm text-blue-600" : "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500";
+            
+            if(method === 'article') {
+                setTimeout(initQuill, 100); // Ensure editor initializes
+            }
+        }
+
+        function savePost() {
+            const title = document.getElementById('postTitle').value;
+            if(!title) return alert('Enter a title');
+            
+            const newPost = {
+                id: Date.now(),
+                title: title,
+                image: document.getElementById('postImage').value || 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800',
+                excerpt: document.getElementById('postExcerpt').value,
+                type: postMethod,
+                content: (postMethod === 'link') ? document.getElementById('docLink').value : quill.root.innerHTML
+            };
+            
+            posts.unshift(newPost);
+            localStorage.setItem('freakNexusPosts', JSON.stringify(posts));
+            renderAdminTable();
+            
+            // Clear inputs
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postImage').value = '';
+            document.getElementById('postExcerpt').value = '';
+            document.getElementById('docLink').value = '';
+            if(quill) quill.setContents([]);
+            alert('Published Successfully!');
+        }
+
+        // UI RENDERERS
+        function renderPortfolio() {
+            const grid = document.getElementById('portfolioGrid');
+            if (posts.length === 0) {
+                grid.innerHTML = '<div class="col-span-full py-20 text-center text-slate-400">No samples found.</div>';
+                return;
+            }
+            grid.innerHTML = posts.map(post => `
+                <div class="portfolio-card flex flex-col border rounded-3xl overflow-hidden bg-white shadow-sm">
+                    <div class="h-48 bg-cover bg-center" style="background-image: url('${post.image}')"></div>
+                    <div class="p-8 flex flex-col justify-between h-full">
+                        <div>
+                            <h3 class="font-black text-xl text-slate-800 leading-tight mb-3">${post.title}</h3>
+                            <p class="text-sm text-slate-400 line-clamp-2">${post.excerpt}</p>
+                        </div>
+                        <button onclick="openContent(${post.id})" class="mt-6 font-bold text-blue-600 text-sm flex items-center gap-2">
+                            View Work <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openContent(id) {
+            const post = posts.find(p => p.id === id);
+            if(post.type === 'link') {
+                window.open(post.content, '_blank');
+            } else {
+                document.getElementById('articleContent').innerHTML = `
+                    <h1 class="text-5xl font-black text-slate-900 mb-6">${post.title}</h1>
+                    <img src="${post.image}" class="w-full h-80 object-cover rounded-3xl mb-10 shadow-lg">
+                    <div class="article-body">${post.content}</div>
+                `;
+                document.getElementById('articleView').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeArticle() { document.getElementById('articleView').style.display = 'none'; document.body.style.overflow = 'auto'; }
+
+        function renderAdminTable() {
+            document.getElementById('postCount').innerText = `${posts.length} Samples`;
+            const body = document.getElementById('adminTableBody');
+            body.innerHTML = posts.map(post => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-5">
+                        <div class="font-bold text-slate-800 text-sm">${post.title}</div>
+                        <div class="text-[9px] uppercase font-bold text-slate-400 mt-1">${post.type}</div>
+                    </td>
+                    <td class="p-5 text-right">
+                        <button onclick="deletePost(${post.id})" class="text-red-300 hover:text-red-600 transition p-2"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function deletePost(id) { if(confirm('Delete permanently?')) { posts = posts.filter(p => p.id !== id); localStorage.setItem('freakNexusPosts', JSON.stringify(posts)); renderAdminTable(); } }
+
+        // JSON CONTROLS
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(posts));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", "blogPosts.json");
+            dl.click();
+        }
+
+       function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const content = ev.target.result;
+                const parsed = JSON.parse(content);
+                if (Array.isArray(parsed)) {
+                    // 1. Update Storage
+                    localStorage.setItem('freakNexusPosts', content);
+                    // 2. Update live variable
+                    posts = parsed;
+                    // 3. Force both renders immediately
+                    renderPortfolio();
+                    renderAdminTable();
+                    alert('Success! ' + posts.length + ' posts imported.');
+                }
+            } catch (err) { alert('Invalid File'); }
+        };
+        reader.readAsText(file);
+    }
+    input.click();
+}
+
+        // NAV CONTROLS
+        function handleLogin() {
+            const u = btoa(document.getElementById('username').value);
+            const p = btoa(document.getElementById('password').value);
+            if(u === _AUTH.u && p === _AUTH.p) {
+                sessionStorage.setItem('fn_admin', 'true');
+                hideLogin(); updateNav(); showView('admin');
+            } else { alert('Denied'); }
+        }
+
+        function updateNav() {
+            const isAdmin = sessionStorage.getItem('fn_admin') === 'true';
+            document.getElementById('loginBtnNav').classList.toggle('hidden', isAdmin);
+            document.getElementById('dashBtnNav').classList.toggle('hidden', !isAdmin);
+        }
+
+       function showView(view) {
+    document.getElementById('publicView').classList.toggle('hidden', view !== 'public');
+    document.getElementById('adminView').classList.toggle('hidden', view !== 'admin');
+    
+    if(view === 'public') {
+        renderPortfolio();
+    }
+    if(view === 'admin') {
+        if(!quill) initQuill();
+        // ALWAYS re-render the table when entering dashboard
+        renderAdminTable(); 
+    }
+}
+
+        function showLogin() { document.getElementById('loginModal').classList.remove('hidden'); }
+        function hideLogin() { document.getElementById('loginModal').classList.add('hidden'); }
+        function logout() { sessionStorage.removeItem('fn_admin'); location.reload(); }
+
+        loadData();
+        updateNav();
+    </script>
+</body>
+</html>
